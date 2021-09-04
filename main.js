@@ -82,7 +82,7 @@ function getHours() {
 
 function drawCanvas() {
     var canvas = document.getElementById("OEWeekScheduleCanvas")
-    var ctx = canvas.getContext("2d")
+    var ctx = canvas.getContext("2d", {alpha: false})
 
     canvas.width = canvas.clientWidth; //document.width is obsolete
     canvas.height = canvas.clientHeight; //document.height is obsolete
@@ -114,7 +114,7 @@ function drawCanvas() {
 
     ctx.beginPath();
     ctx.fillStyle = "#ff0000"
-    ctx.fillRect(0,0, width, headerHeight*height)
+    //ctx.fillRect(0,0, width, headerHeight*height)
     ctx.closePath();
 
     ctx.fillStyle = "#000000"
@@ -143,6 +143,7 @@ function drawCanvas() {
     ctx.beginPath();
     ctx.fillStyle = "#00ff00"
     ctx.strokeStyle = "#000000";
+    ctx.font = "1.25em Arial";
     // Draw hours
     for (var i = 0; i < 5; i++) {
         var hoursForDay = hours[i]
@@ -152,9 +153,22 @@ function drawCanvas() {
             var startY = (info.startTime - startTime) * minute
             var endY = (info.endTime - info.startTime) * minute
             print(endY)
+            ctx.beginPath()
+            ctx.fillStyle = "#00ff00"
             ctx.rect(localX + 5, startY + headerHeight*height + 2, (scheduleWidth/5) - 10, endY);
             ctx.fill()
             ctx.stroke()
+            ctx.closePath()
+            ctx.beginPath()
+            ctx.fillStyle = "#000000"
+            ctx.font = "1.25em Arial";
+            ctx.fillText(info.subject + " - " + info.teacher, localX + 10, startY + endY + 20);
+            ctx.closePath()
+            ctx.beginPath()
+            ctx.fillStyle = "#000000"
+            ctx.font = "1em Arial";
+            ctx.fillText(info.room + "  " + getReprFromMinutes(info.startTime) + " - " + getReprFromMinutes(info.endTime), localX + 10, startY + endY + 40);
+            ctx.closePath()
         }
     }
     ctx.closePath();
