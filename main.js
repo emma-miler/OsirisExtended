@@ -41,9 +41,11 @@ function addStyle(styleString) {
   }
 
 function waitUntilLoaded() {
-    var found = document.getElementsByClassName("header-md")
+    var found = document.getElementsByTagName("osi-calendar-day")
     if (found.length != 0) {
         print("LOADED")
+        print(found.length)
+        print(found)
         fixLayout()
     }
     else {
@@ -71,6 +73,10 @@ function getHours() {
             var room = classObj.children[1].children[1].children[0].children[2]
             if (room != undefined) {
                 room = room.innerText
+            }
+            if (teacher.substring(0, 3) == "GVP") {
+                room = teacher
+                teacher = "Not Assigned"
             }
             var inst = new Class(classStartTime, classEndTime, subject, teacher, room)
             dayList.push(inst)
@@ -155,6 +161,9 @@ function drawCanvas() {
             print(endY)
             ctx.beginPath()
             ctx.fillStyle = "#00ff00"
+            if (info.teacher == "Not Assigned") {
+                ctx.fillStyle = "#ffa500"
+            }
             ctx.rect(localX + 5, startY + headerHeight*height + 2, (scheduleWidth/5) - 10, endY);
             ctx.fill()
             ctx.stroke()
@@ -213,6 +222,10 @@ function fixLayout() {
         width: 100%;
         height: 100%;
     }
+    osi-calendar-week-selector .osi-calendar-week-selector {
+        position: relative;
+        left: -30px;
+    }
     `)
     getHours()
     drawCanvas()
@@ -227,4 +240,11 @@ window.onresize = function () {
     drawCanvas();
 }
 
-fixLayout()
+// TODO: fix this
+window.addEventListener('popstate', function (event) {
+	print("URL POPPED!!!!!!")
+});
+
+window.addEventListener('pushstate', function (event) {
+	print("URL PUSHED!!!!!!")
+});
