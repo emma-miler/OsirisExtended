@@ -1,5 +1,8 @@
 function print(toPrint) {console.log(toPrint)}
 
+// TODO: For some reason the website needs user interaction before being able to open the day tabs
+// Need to fix this somehow
+
 // Some constants for drawing the widget.
 // Unit = x/1
 const headerWidth = .1;
@@ -12,6 +15,9 @@ const gridDivision = 60;
 const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
 var hours = [];
+
+var needsUserInteraction = true;
+var layoutNeedsUpdate = false;
 
 let Class = class {
     constructor(startTime, endTime, subject, teacher, room) {
@@ -47,6 +53,8 @@ function waitUntilLoaded() {
         print(found.length)
         print(found)
         fixLayout()
+        getHours()
+        drawCanvas()
     }
     else {
         print("NOT LOADED")
@@ -59,9 +67,17 @@ function getHours() {
     days = document.getElementsByTagName("osi-calendar-day")
     hours = []
     print(days)
+    var y = -1
     for (var i = 0; i < 5; i++) {
-        classList = days[i].children[0].children[1].children
-        dayList = []
+	if (days[i].children[0].children[1] == undefined) {
+		// Day is collapsed
+		print("Collapsed")
+		print(days[i]);
+		days[i].children[0].children[0].children[0].click();
+	}
+	if (days[i].children[0].children[1] == undefined) {continue}
+    classList = days[i].children[0].children[1].children
+	dayList = []
         for (var x = 0; x < classList.length; x++) {
             // Yeah idk either, why do you need *this* many wrappers??
             var classObj = classList[x].children[0].children[0].children[0].children[0].children[0].children[0]
@@ -86,7 +102,30 @@ function getHours() {
     //print(hours)
 }
 
+function drawButton() {
+    var canvas = document.getElementById("OEWeekScheduleCanvas")
+    var ctx = canvas.getContext("2d", {alpha: false})
+
+    canvas.width = canvas.clientWidth; //document.width is obsolete
+    canvas.height = canvas.clientHeight; //document.height is obsolete
+
+    width = canvas.width
+    height = canvas.height
+    ctx.fillStyle = "#fafafa"
+    ctx.fillRect(0, 0, width, height)
+    ctx.fillStyle = "#000000"
+    ctx.lineWidth = 1
+    ctx.font = "30px Arial";
+    ctx.fillText("Click anywhere on this page to load the schedule widget", 0, 40);
+    //ctx.stroke();
+    
+}
+
 function drawCanvas() {
+    if (needsUserInteraction) {
+        drawButton();
+        return;
+    }
     var canvas = document.getElementById("OEWeekScheduleCanvas")
     var ctx = canvas.getContext("2d", {alpha: false})
 
@@ -153,6 +192,7 @@ function drawCanvas() {
     // Draw hours
     for (var i = 0; i < 5; i++) {
         var hoursForDay = hours[i]
+	if (hoursForDay == undefined) {continue}
         var localX = i*(scheduleWidth/5) + headerWidth*width - 30
         for (var h = 0; h < hoursForDay.length; h++) {
             var info = hoursForDay[h]
@@ -227,24 +267,54 @@ function fixLayout() {
         left: -30px;
     }
     `)
+    layoutNeedsUpdate = false;
     getHours()
     drawCanvas()
 }
 
 window.onload = function() {
     console.log('window - onload'); // 4th
-    setTimeout( function() { waitUntilLoaded() } , 0);
+    if (window.location.href == "https://mborijnland.osiris-student.nl/#/rooster") {
+         setTimeout( function() { waitUntilLoaded() } , 0);
+    }
 };
 
 window.onresize = function () {
-    drawCanvas();
+    if (window.location.href == "https://mborijnland.osiris-student.nl/#/rooster") {
+        getHours();
+    	drawCanvas();
+    }
 }
 
-// TODO: fix this
-window.addEventListener('popstate', function (event) {
-	print("URL POPPED!!!!!!")
-});
+function waitForHREFUpdate(origin) {
+    if (window.location.href != origin) {
+        print("RAN UPPER UPDATE CODE")
+        print(origin)
+        print(window.location.href)
+        if (window.location.href == "https://mborijnland.osiris-student.nl/#/rooster") {
+            print("RAN HREFUPDATE CODE")
+            fixLayout()
+            needsUserInteraction = true
+            drawCanvas()
+        }
+    }
+    else {
+        setTimeout( function() { waitForHREFUpdate(origin) } , 100);
+    }
+    return
+}
 
-window.addEventListener('pushstate', function (event) {
-	print("URL PUSHED!!!!!!")
+window.addEventListener('click', function (event) {
+    print("Click event");
+    print(window.location.href)
+    if (window.location.href == "https://mborijnland.osiris-student.nl/#/rooster") {
+        if (layoutNeedsUpdate) {fixLayout()}
+    	getHours()
+    	drawCanvas()
+    }
+    else {
+        layoutNeedsUpdate = true;
+        waitForHREFUpdate(window.location.href)
+    }
+	needsUserInteraction = false;
 });
