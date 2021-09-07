@@ -3,6 +3,8 @@ function print(toPrint) {console.log(toPrint)}
 // TODO: For some reason the website needs user interaction before being able to open the day tabs
 // Need to fix this somehow
 
+// TODO: give the whole thing a graphical pass
+
 // Some constants for drawing the widget.
 // Unit = x/1
 const headerWidth = .1;
@@ -66,13 +68,10 @@ function waitUntilLoaded() {
 function getHours() {
     days = document.getElementsByTagName("osi-calendar-day")
     hours = []
-    print(days)
     var y = -1
     for (var i = 0; i < 5; i++) {
 	if (days[i].children[0].children[1] == undefined) {
 		// Day is collapsed
-		print("Collapsed")
-		print(days[i]);
 		days[i].children[0].children[0].children[0].click();
 	}
 	if (days[i].children[0].children[1] == undefined) {continue}
@@ -99,7 +98,6 @@ function getHours() {
         }
         hours.push(dayList)
     }
-    //print(hours)
 }
 
 function drawButton() {
@@ -149,12 +147,7 @@ function drawCanvas() {
     
     // Draw vertical header
     minute =  scheduleHeight / timeSpan
-    //print(minute)
-    //print(getReprFromMinutes(startTime))
-    //print(getReprFromMinutes(endTime))
     var divisions = Math.floor(timeSpan/gridDivision) + 0
-    //print(divisions)
-    //print(timeSpan)
 
 
     ctx.beginPath();
@@ -198,7 +191,6 @@ function drawCanvas() {
             var info = hoursForDay[h]
             var startY = (info.startTime - startTime) * minute
             var endY = (info.endTime - info.startTime) * minute
-            print(endY)
             ctx.beginPath()
             ctx.fillStyle = "#00ff00"
             if (info.teacher == "Not Assigned") {
@@ -211,12 +203,12 @@ function drawCanvas() {
             ctx.beginPath()
             ctx.fillStyle = "#000000"
             ctx.font = "1.25em Arial";
-            ctx.fillText(info.subject + " - " + info.teacher, localX + 10, startY + endY + 20);
+            ctx.fillText(info.subject + " - " + info.teacher, localX + 10, startY + endY + 20, scheduleWidth/5 - 20);
             ctx.closePath()
             ctx.beginPath()
             ctx.fillStyle = "#000000"
             ctx.font = "1em Arial";
-            ctx.fillText(info.room + "  " + getReprFromMinutes(info.startTime) + " - " + getReprFromMinutes(info.endTime), localX + 10, startY + endY + 40);
+            ctx.fillText(info.room + "  " + getReprFromMinutes(info.startTime) + " - " + getReprFromMinutes(info.endTime), localX + 10, startY + endY + 40, scheduleWidth/5 - 20);
             ctx.closePath()
         }
     }
@@ -288,11 +280,7 @@ window.onresize = function () {
 
 function waitForHREFUpdate(origin) {
     if (window.location.href != origin) {
-        print("RAN UPPER UPDATE CODE")
-        print(origin)
-        print(window.location.href)
         if (window.location.href == "https://mborijnland.osiris-student.nl/#/rooster") {
-            print("RAN HREFUPDATE CODE")
             fixLayout()
             needsUserInteraction = true
             drawCanvas()
@@ -305,8 +293,6 @@ function waitForHREFUpdate(origin) {
 }
 
 window.addEventListener('click', function (event) {
-    print("Click event");
-    print(window.location.href)
     if (window.location.href == "https://mborijnland.osiris-student.nl/#/rooster") {
         if (layoutNeedsUpdate) {fixLayout()}
     	getHours()
