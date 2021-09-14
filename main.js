@@ -182,8 +182,6 @@ function drawCanvas() {
     ctx.strokeStyle = "#000000";
     ctx.font = "1.25em Arial";
     var textHeight = ctx.measureText("Tst").actualBoundingBoxAscent
-    print("Text height:")
-    print(textHeight)
     // Draw hours
     for (var i = 0; i < 5; i++) {
         var hoursForDay = hours[i]
