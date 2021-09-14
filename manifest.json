@@ -5,6 +5,10 @@
     "version": "0.1",
   
     "description": "Fixes several problems with the Osiris schedule site",
+    
+    "permissions": [
+        "storage"
+    ],
   
     "content_scripts": [
       {
@@ -12,6 +16,10 @@
         "js": ["main.js"],
         "run_at": "document_end"
       }
-    ]
+    ],
+    
+    "browser_action": {
+        "default_popup": "popup/main.html"
+    }
   
   }

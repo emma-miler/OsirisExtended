@@ -1,0 +1,90 @@
+<meta http-equiv="Content-Security-Policy" content="script-src *">
+
+<meta charset="UTF-8">
+
+
+<html>
+    <head>
+         <script src="main.js"></script>
+         <style>
+            body {
+                min-width: 400px;
+                overflow-x: hidden;
+            }
+            #container {
+                display: grid;
+                grid-gap: 0em 0em 0em 0em;
+                grid-template-rows: repeat(var(--grid-rows), 2fr);
+                grid-template-columns: 2fr 1fr 0.7fr;
+                width: 96%;
+            }
+            :root {
+               --grid-cols: 1;
+               --grid-rows: 1;
+            }
+            .grid-item {
+               padding: 1em;
+               border: 1px solid #ddd;
+               text-align: center;
+               height: 1.5em;
+            }
+            .buttonCreate {
+                width: 49%;
+                height: 3em;
+                background-color: #33cc33;
+                border: none;
+                color: white;
+                font-weight: bold;
+                font-size: 1em;
+            }
+            .buttonCreate:hover {
+                background-color: #22bb22;
+            }
+            .buttonCreate:active {
+                background-color: #11aa11;
+            }
+            
+            .buttonEdit {
+                width: 49%;
+                height: 3em;
+                background-color: #00CCCC;
+                border: none;
+                color: white;
+                font-weight: bold;
+                font-size: 1em;
+            }
+            .buttonEdit:hover {
+                background-color: #00BBBB;
+            }
+            .buttonEdit:active {
+                background-color: #00AAAA;
+            }
+            
+            .buttonDelete {
+                background-color: #bb2222;
+                border: none;
+                border-radius: 5px;
+                color: white;
+            }
+            .buttonDelete:hover {
+                background-color: #aa1111;
+            }
+            .buttonDelete:active {
+                background-color: #990000;
+            }
+            .buttonDelete:disabled {
+                background-color: #cc9999;
+            }
+            
+            .nameInput:disabled {
+                border: none;
+                background-color: transparent;
+                color: black;
+            }
+             
+         </style>
+     </head>
+     <body>
+        <div id="container"></div>
+     </body>
+</html>
