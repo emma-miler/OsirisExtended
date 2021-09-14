@@ -22,12 +22,13 @@ var needsUserInteraction = true;
 var layoutNeedsUpdate = false;
 
 let Class = class {
-    constructor(startTime, endTime, subject, teacher, room) {
+    constructor(startTime, endTime, subject, teacher, room, DOMObject) {
         this.startTime = startTime;
         this.endTime = endTime;
         this.subject = subject;
         this.teacher = teacher;
         this.room = room;
+        this.DOMObject = DOMObject;
     }
 }
 
@@ -51,15 +52,11 @@ function addStyle(styleString) {
 function waitUntilLoaded() {
     var found = document.getElementsByTagName("osi-calendar-day")
     if (found.length != 0) {
-        print("LOADED")
-        print(found.length)
-        print(found)
         fixLayout()
         getHours()
         drawCanvas()
     }
     else {
-        print("NOT LOADED")
         setTimeout( function() { waitUntilLoaded() } , 10);
     }
     return
@@ -70,33 +67,35 @@ function getHours() {
     hours = []
     var y = -1
     for (var i = 0; i < 5; i++) {
-	if (days[i].children[0].children[1] == undefined) {
-		// Day is collapsed
-		days[i].children[0].children[0].children[0].click();
-	}
-	if (days[i].children[0].children[1] == undefined) {continue}
-    classList = days[i].children[0].children[1].children
-	dayList = []
-        for (var x = 0; x < classList.length; x++) {
-            // Yeah idk either, why do you need *this* many wrappers??
-            var classObj = classList[x].children[0].children[0].children[0].children[0].children[0].children[0]
-            var times = classObj.children[0]
-            var classStartTime = getMinutesFromTime(times.children[0].innerText)
-            var classEndTime = getMinutesFromTime(times.children[1].innerText)
-            var subject = classObj.children[1].children[0].innerText
-            var teacher = classObj.children[1].children[1].children[0].children[1].innerText
-            var room = classObj.children[1].children[1].children[0].children[2]
-            if (room != undefined) {
-                room = room.innerText
+	    if (days[i].children[0].children[1] == undefined) {
+		    // Day is collapsed
+		    days[i].children[0].children[0].children[0].click();
+	    }
+	    if (days[i].children[0].children[1] == undefined) {hours.push([]); continue} // skip day if empty
+        classList = days[i].children[0].children[1].children
+	    dayList = []
+            for (var x = 0; x < classList.length; x++) {
+                // Yeah idk either, why do you need *this* many wrappers??
+                var classObj = classList[x].children[0].children[0].children[0].children[0].children[0].children[0]
+                var times = classObj.children[0]
+                var classStartTime = getMinutesFromTime(times.children[0].innerText)
+                var classEndTime = getMinutesFromTime(times.children[1].innerText)
+                var subject = classObj.children[1].children[0].innerText
+                var teacher = classObj.children[1].children[1].children[0].children[1].innerText
+                var room = classObj.children[1].children[1].children[0].children[2]
+                var DOMObject = classObj;
+                //print(DOMObject)
+                if (room != undefined) {
+                    room = room.innerText
+                }
+                if (teacher.substring(0, 3) == "GVP") {
+                    room = teacher
+                    teacher = "Not Assigned"
+                }
+                var inst = new Class(classStartTime, classEndTime, subject, teacher, room, DOMObject)
+                dayList.push(inst)
             }
-            if (teacher.substring(0, 3) == "GVP") {
-                room = teacher
-                teacher = "Not Assigned"
-            }
-            var inst = new Class(classStartTime, classEndTime, subject, teacher, room)
-            dayList.push(inst)
-        }
-        hours.push(dayList)
+            hours.push(dayList)
     }
 }
 
@@ -182,6 +181,9 @@ function drawCanvas() {
     ctx.fillStyle = "#00ff00"
     ctx.strokeStyle = "#000000";
     ctx.font = "1.25em Arial";
+    var textHeight = ctx.measureText("Tst").actualBoundingBoxAscent
+    print("Text height:")
+    print(textHeight)
     // Draw hours
     for (var i = 0; i < 5; i++) {
         var hoursForDay = hours[i]
@@ -203,7 +205,9 @@ function drawCanvas() {
             ctx.beginPath()
             ctx.fillStyle = "#000000"
             ctx.font = "1.25em Arial";
-            ctx.fillText(info.subject + " - " + info.teacher, localX + 10, startY + endY + 20, scheduleWidth/5 - 20);
+            if (endY > textHeight * 3) {
+                ctx.fillText(info.subject + " - " + info.teacher, localX + 10, startY + endY + 20, scheduleWidth/5 - 20);
+            }
             ctx.closePath()
             ctx.beginPath()
             ctx.fillStyle = "#000000"
@@ -216,6 +220,33 @@ function drawCanvas() {
     return
 }
 
+function canvasClick(event) {
+    var canvas = document.getElementById("OEWeekScheduleCanvas")
+    var rect = canvas.getBoundingClientRect()
+    var ctx = canvas.getContext("2d", {alpha: false})
+    
+    canvas.width = canvas.clientWidth; //document.width is obsolete
+    canvas.height = canvas.clientHeight; //document.height is obsolete
+    
+    width = canvas.width
+    height = canvas.height
+    
+    ctx.fillStyle = "#00FF00"
+    ctx.fillRect(0, 0, event.clientX - rect.left, event.clientY - rect.top)
+    var x = event.clientX - rect.left
+    var y = event.clientY - rect.top
+    var column = Math.floor( (x-(headerWidth*width)*0.8) / (((1-headerWidth) * width) / 5))
+    // ctx.rect(localX + 5, startY + headerHeight*height + 2, (scheduleWidth/5) - 10, endY);
+    minute =  (height * (1-headerHeight)) / timeSpan
+    var pixelNumber = y - (headerHeight * height)
+    var time = pixelNumber / minute + startTime
+    for (subject of hours[column]) {
+        if (subject.startTime < time && time < subject.endTime) {
+            subject.DOMObject.click()
+        }
+    }
+}
+
 function fixLayout() {
     document.getElementsByTagName("osi-page-left")[0].style.width = "25%"
     var rightSide = document.getElementsByTagName("osi-page-right")[0]
@@ -226,6 +257,7 @@ function fixLayout() {
     if ( document.getElementsByClassName("OEWeekSchedule").length == 0) {
         rightSide.parentElement.appendChild(weekScheduleContainer);
         weekScheduleContainer.appendChild(weekScheduleCanvas)
+        weekScheduleCanvas.addEventListener("click", canvasClick);
     }
     document.getElementById("acc-nav").style.width = "100%"
     document.getElementById("acc-nav").style.zIndex = "100"
@@ -236,7 +268,7 @@ function fixLayout() {
         top: 65px;
         left: 12px;
         width: 73.5%;
-        height: 40%;
+        height: 35%;
     }
     #osi-detail-header-container {padding-top: 0px;}
     .osi-detail-header-container {padding: 15px 15px 15px 15px;}
@@ -245,7 +277,7 @@ function fixLayout() {
         background-color: red;
         position: absolute;
         left: 25.7%;
-        height: 51%;
+        height: 56%;
         bottom: 10px;
         right: 10px;
         box-shadow: 0 1px 15px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.22);
