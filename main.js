@@ -7,8 +7,8 @@ function print(toPrint) {console.log(toPrint)}
 
 // Some constants for drawing the widget.
 // Unit = x/1
-const headerWidth = .1;
-const headerHeight = .1;
+const headerWidth = .075;
+const headerHeight = .075;
 const startTime = getMinutesFromTime("08:00");
 const endTime = getMinutesFromTime("21:00");
 const timeSpan = endTime - startTime;
@@ -118,6 +118,22 @@ function drawButton() {
     
 }
 
+function drawSubject(ctx, x, y, width, height, color) {
+    ctx.beginPath()
+    ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.5)`
+    ctx.fillRect(x, y, width, height)
+    ctx.stroke()
+    ctx.closePath()
+    ctx.beginPath()
+    var darken = 64
+    ctx.fillStyle = `rgba(${Math.max(color.r - darken, 0)}, ${Math.max(color.g - darken, 0)}, ${Math.max(color.b - darken, 0)}, 1)`
+    ctx.fillRect(x, y, 3, height)
+    ctx.fillRect(x, y, width, 2)
+    //ctx.fillRect(x, y + height - 3, width, 3)
+    ctx.stroke()
+    ctx.closePath()
+}
+
 function drawCanvas() {
     if (needsUserInteraction) {
         drawButton();
@@ -170,7 +186,7 @@ function drawCanvas() {
     for (var i = 0; i < 5; i++) {
         ctx.strokeStyle = "#b0b0b0"
         //getReprFromMinutes(startTime + (i*gridDivision))
-        ctx.fillText(dayNames[i], ((i*(scheduleWidth/5)) + headerWidth*width) + 30, 30);
+        ctx.fillText(dayNames[i], (i * (scheduleWidth/5)) + (headerWidth * width) + 45, 30);
         ctx.moveTo((i*(scheduleWidth/5)) + headerWidth*width - 30, 30)
         ctx.lineTo((i*(scheduleWidth/5)) + headerWidth*width - 30, height-15)
         ctx.stroke();
@@ -194,9 +210,11 @@ function drawCanvas() {
             ctx.beginPath()
             ctx.fillStyle = "#00ff00"
             if (info.teacher == "Not Assigned") {
-                ctx.fillStyle = "#ffa500"
+                drawSubject(ctx, localX + 5, startY + headerHeight*height + 2, (scheduleWidth/5) - 10, endY, {r: "255", g:"170", b:"0"})
             }
-            ctx.rect(localX + 5, startY + headerHeight*height + 2, (scheduleWidth/5) - 10, endY);
+            else {
+                drawSubject(ctx, localX + 5, startY + headerHeight*height + 2, (scheduleWidth/5) - 10, endY, {r: "0", g:"255", b:"0"})
+            }
             ctx.fill()
             ctx.stroke()
             ctx.closePath()
@@ -204,14 +222,21 @@ function drawCanvas() {
             ctx.fillStyle = "#000000"
             ctx.font = "1.25em Arial";
             if (endY > textHeight * 3) {
-                ctx.fillText(info.subject + " - " + info.teacher, localX + 10, startY + endY + 20, scheduleWidth/5 - 20);
+                ctx.fillText(info.subject + " - " + info.teacher, localX + 10, startY + endY + 10, scheduleWidth/5 - 20);
+                ctx.closePath()
+                ctx.beginPath()
+                ctx.fillStyle = "#000000"
+                ctx.font = "1em Arial";
+                ctx.fillText(info.room + "  " + getReprFromMinutes(info.startTime) + " - " + getReprFromMinutes(info.endTime), localX + 10, startY + endY + 30, scheduleWidth/5 - 20);
+                ctx.closePath()
             }
-            ctx.closePath()
-            ctx.beginPath()
-            ctx.fillStyle = "#000000"
-            ctx.font = "1em Arial";
-            ctx.fillText(info.room + "  " + getReprFromMinutes(info.startTime) + " - " + getReprFromMinutes(info.endTime), localX + 10, startY + endY + 40, scheduleWidth/5 - 20);
-            ctx.closePath()
+            else {
+                ctx.beginPath()
+                ctx.fillStyle = "#000000"
+                ctx.font = "1em Arial";
+                ctx.fillText(info.room + "  " + getReprFromMinutes(info.startTime) + " - " + getReprFromMinutes(info.endTime), localX + 10, startY + ctx.measureText("TEST").actualBoundingBoxAscent*2 + 40, scheduleWidth/5 - 20);
+                ctx.closePath()
+            }
         }
     }
     ctx.closePath();
