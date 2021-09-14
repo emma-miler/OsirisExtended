@@ -1,4 +1,5 @@
-var settings = [];
+// Data is stored in a key:value format with the name as the key and color as the value
+var settings = {};
 var editMode = false;
 
 // Stupid little hack
@@ -13,6 +14,7 @@ catch (error) {
 
 // Save and Load
 
+// Save collected data to storage
 function save() {
   if (platform == "firefox") {
     browser.storage.sync.set({
@@ -26,20 +28,21 @@ function save() {
   }
 }
 
+// Parse the retreived data
+// Separate function for async reasons
 function parseLoad(result) {
   settings = result["OsirisExtended"];
   if (settings == undefined) {
-    settings = [];
+    settings = {};
   }
   console.log(settings);
 }
 
+// Load data from storage
 function restoreOptions() {
-
   function onError(error) {
     console.log(`Error: ${error}`);
   }
-
   if (platform == "firefox") {
     var rlinks = browser.storage.sync.get("OsirisExtended");
     rlinks.then(parseLoad, onError);
@@ -49,12 +52,18 @@ function restoreOptions() {
       var rlinks = chrome.storage.sync.get(["OsirisExtended"], parseLoad);
     }
     catch (error) {
-      settings = [];
+      settings = {};
     }
   }
 }
 
-function addRow(title) {
+// Gathers data
+function saveOptions() {
+    // TODO: write a function to save
+    save()
+}
+
+function addRow(title, color) {
     var cellLeft = document.createElement("div");
     var name = document.createElement("input")
     name.disabled = true;
@@ -66,6 +75,7 @@ function addRow(title) {
     var input = document.createElement("input")
     input.type = "color"
     input.disabled = true;
+    input.value = color
     input.classList = "colorInput"
     container.appendChild(cellMiddle).className = "grid-item";
     cellMiddle.appendChild(input)
@@ -87,11 +97,12 @@ window.onload = function () {
     var container = document.getElementById("container")
     container.style.setProperty('--grid-rows', rows);
     container.style.setProperty('--grid-cols', cols);
-    for (c = 0; c < rows; c++) {
-        addRow(c + 1)
+    for (const [key, value] of Object.entries(settings)) {
+        addRow(key, value)
     };
     var buttonEdit = document.createElement("button")
     buttonEdit.innerText = "P Edit"
+    buttonEdit.id = "buttonEdit"
     buttonEdit.classList = "buttonEdit"
     buttonEdit.addEventListener("click", function() {
         editMode = !editMode;
@@ -106,6 +117,10 @@ window.onload = function () {
         var nameInputs = document.getElementsByClassName("nameInput")
         for (input of nameInputs) {
           input.disabled = !editMode;
+        }
+        document.getElementById("buttonEdit").innerText = editMode ? "P Save" : "P Edit"
+        if (!editMode) {
+            saveOptions()
         }
     })
     document.body.appendChild(buttonEdit)
