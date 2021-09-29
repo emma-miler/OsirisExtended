@@ -5,6 +5,16 @@ function print(toPrint) {console.log(toPrint)}
 
 // TODO: give the whole thing a graphical pass
 
+// Stupid little hack
+// Browser is defined in firefox but not in chrome
+try {
+    browser;
+    platform = "firefox";
+  }
+  catch (error) {
+    platform = "chrome";
+  }
+
 // Some constants for drawing the widget.
 // Unit = x/1
 const headerWidth = .075;
@@ -17,6 +27,8 @@ const gridDivision = 60;
 const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
 var hours = [];
+
+var colors = {};
 
 var needsUserInteraction = true;
 var layoutNeedsUpdate = false;
@@ -31,6 +43,15 @@ let Class = class {
         this.DOMObject = DOMObject;
     }
 }
+
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
 
 function getMinutesFromTime(input) {
     var s = input.split(":")
@@ -54,12 +75,47 @@ function waitUntilLoaded() {
     if (found.length != 0) {
         fixLayout()
         getHours()
+        restoreOptions()
         drawCanvas()
     }
     else {
         setTimeout( function() { waitUntilLoaded() } , 10);
     }
     return
+}
+
+function parseLoad(result) {
+    settings = result["OsirisExtended"];
+    if (settings == undefined) {
+        
+    }
+    else {
+        for (subject of settings) {
+            colors[subject.title] = subject.color
+        }
+    }
+    console.log(colors)
+    console.log("LOADED COLORS")
+    drawCanvas()
+}
+  
+// Load data from storage
+function restoreOptions() {
+    function onError(error) {
+        console.log(`Error: ${error}`);
+    }
+    if (platform == "firefox") {
+        var rlinks = browser.storage.sync.get("OsirisExtended");
+        rlinks.then(parseLoad, onError);
+    }
+    else if (platform == "chrome") {
+        try{
+        var rlinks = chrome.storage.sync.get(["OsirisExtended"], parseLoad);
+        }
+        catch (error) {
+        settings = {};
+        }
+    }
 }
 
 function getHours() {
@@ -97,6 +153,16 @@ function getHours() {
             }
             hours.push(dayList)
     }
+    if (platform == "firefox") {
+        browser.storage.sync.set({
+          OSE_HOURS: hours
+        });
+      }
+      else if (platform == "chrome") {
+        chrome.storage.sync.set({
+          "OSE_HOURS": hours
+        });
+      }
 }
 
 function drawButton() {
@@ -213,7 +279,8 @@ function drawCanvas() {
                 drawSubject(ctx, localX + 5, startY + headerHeight*height + 2, (scheduleWidth/5) - 10, endY, {r: "255", g:"170", b:"0"})
             }
             else {
-                drawSubject(ctx, localX + 5, startY + headerHeight*height + 2, (scheduleWidth/5) - 10, endY, {r: "0", g:"255", b:"0"})
+                color = colors[info.subject] == undefined ? {r: "0", g:"255", b:"0"} : hexToRgb(colors[info.subject])
+                drawSubject(ctx, localX + 5, startY + headerHeight*height + 2, (scheduleWidth/5) - 10, endY, color)
             }
             ctx.fill()
             ctx.stroke()
